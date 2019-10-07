@@ -86,7 +86,7 @@ RUN { \
         echo 'DirectoryIndex disabled'; \
         echo 'DirectoryIndex index.php index.html'; \
         echo; \
-        echo '<Directory /var/ww/>'; \
+        echo '<Directory /var/www/>'; \
         echo '\tOptions -Indexes'; \
         echo '\tAllowOverride All'; \
         echo '</Directory>'; \
