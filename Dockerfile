@@ -331,8 +331,11 @@ RUN for key in \
 
 # Install SilverStripe Dependencies
 RUN apt-install \
+        libfreetype6-dev \
         libicu-dev \
         libmagickwand-dev \
+        libjpeg-dev \
+        libpng-dev \
         libtidy-dev \
         mariadb-client \
         unzip \
@@ -341,6 +344,9 @@ RUN apt-install \
 RUN a2enmod rewrite
 
 RUN docker-php-ext-configure intl
+RUN docker-php-ext-configure gd \
+    --with-freetype-dir=/usr/include \
+    --with-jpeg-dir=/usr/include
 RUN docker-php-ext-install \
         gd \
         intl \
