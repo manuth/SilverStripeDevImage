@@ -7,5 +7,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ## SilverStripeDevImage php-7.3.10-composer-1.9.0-node-10.16.3
   - Initial release
   - Add JPEG and FreeType support for `gd`
+  - Remove Apache's default `/icons/` alias
 
 [Show differences](https://github.com/manuth/SilverStripeDevImage/compare/37a02387befa7cd1f95f9b58090214d773d4e7b7...php-7.3.10-composer-1.9.0-node-10.16.3)
