@@ -77,6 +77,8 @@ RUN \
 
 RUN a2dismod mpm_event && a2enmod mpm_prefork
 
+RUN sed -i 's/\(Alias \/icons\/.*\)$/# \1/' /etc/apache2/mods-enabled/alias.conf
+
 ## Configuring Apache for handling PHP-Files
 RUN { \
         echo '<FilesMatch \.php$>'; \
