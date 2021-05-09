@@ -252,7 +252,7 @@ RUN apt-install \
 
 ENV COMPOSER_ALLOW_SUPERUSER 1
 ENV COMPOSER_HOME /tmp
-ENV COMPOSER_VERSION 1.10.13
+ENV COMPOSER_VERSION 2.0.13
 
 RUN curl --silent --fail --location --retry 3 -o /tmp/installer.php --url https://raw.githubusercontent.com/composer/getcomposer.org/cb19f2aa3aeaa2006c0cd69a7ef011eb31463067/web/installer && \
     php -r " \
