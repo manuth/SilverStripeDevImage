@@ -1,4 +1,4 @@
-FROM php:7.3-apache
+FROM php:8.0.6-apache
 FROM debian:buster-slim
 
 # Prepare Apt-Installer
@@ -99,15 +99,15 @@ RUN { \
 ENV PHP_EXTRA_BUILD_DEPS apache2-dev
 ENV PHP_EXTRA_CONFIGURE_ARGS --with-apxs2 --disable-cgi
 
-ENV PHP_CFLAGS="-fstack-protector-strong -fpic -fpie -O2"
+ENV PHP_CFLAGS="-fstack-protector-strong -fpic -fpie -O2 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
 ENV PHP_CPPFLAGS="$PHP_CFLAGS"
 ENV PHP_LDFLAGS="-Wl,-O1 -Wl,--hash-style=both -pie"
 
-ENV GPG_KEYS CBAF69F173A0FEA4B537F470D66C9593118BCCB6 F38252826ACD957EF380D39F2F7956BC5DA04B5D
+ENV GPG_KEYS 1729F83938DA44E27BA0F4D3DBDB397470D12172 BFDDD28642824F8118EF77909B67A5C12229118F
 
-ENV PHP_VERSION 7.4.11
-ENV PHP_URL="https://www.php.net/get/php-${PHP_VERSION}.tar.xz/from/this/mirror" PHP_ASC_URL="https://www.php.net/get/php-${PHP_VERSION}.tar.xz.asc/from/this/mirror"
-ENV PHP_SHA256="" PHP_MD5=""
+ENV PHP_VERSION 8.0.6
+ENV PHP_URL="https://www.php.net/distributions/php-${PHP_VERSION}.tar.xz" PHP_ASC_URL="https://www.php.net/distributions/php-${PHP_VERSION}.tar.xz.asc"
+ENV PHP_SHA256="e9871d3b6c391fe9e89f86f6334852dcc10eeaaa8d5565beb8436e7f0cf30e20"
 
 RUN \
     savedAptMark="$(apt-mark showmanual)"; \
@@ -119,9 +119,6 @@ RUN \
     \
     if [ -n "${PHP_SHA256}" ]; then \
         echo "${PHP_SHA256} *php.tar.xz" | sha256sum -c -; \
-    fi; \
-    if [ -n "${PHP_MD5}" ]; then \
-        echo "${PHP_MD5} *php.tar.xz" | md5sum -c -; \
     fi; \
     \
     if [ -n "${PHP_ASC_URL}" ]; then \
@@ -147,12 +144,18 @@ RUN \
         libargon2-dev \
         libcurl4-openssl-dev \
         libedit-dev \
+        libonig-dev \
         libsodium-dev \
         libsqlite3-dev \
         libssl-dev \
         libxml2-dev \
         zlib1g-dev \
         ${PHP_EXTRA_BUILD_DEPS:-} \
+    ; \
+    export \
+        CFLAGS="${PHP_CFLAGS}" \
+        CPPFLAGS="${PHP_CPPFLAGS}" \
+        LDFLAGS="${PHP_LDFLAGS}" \
     ; \
     docker-php-source extract; \
     cd /usr/src/php; \
@@ -178,6 +181,7 @@ RUN \
         --with-libedit \
         --with-openssl \
         --with-zlib \
+        --with-pear \
         $(test "$gnuArch" = 's390x-linux-gnu' && echo '--without-pcre-jit') \
         --with-libdir="lib/$debMultiarch" \
         ${PHP_EXTRA_CONFIGURE_ARGS:-} \
@@ -212,7 +216,6 @@ RUN \
 COPY --from=0 /usr/local/bin/docker-php-ext-* /usr/local/bin/docker-php-entrypoint /usr/local/bin/
 
 RUN docker-php-ext-enable sodium
-RUN { echo '#!/bin/sh'; echo 'exec pkg-config "$@" freetype2'; } > /usr/local/bin/freetype-config && chmod +x /usr/local/bin/freetype-config
 
 ENTRYPOINT [ "docker-php-entrypoint" ]
 STOPSIGNAL SIGWINCH
@@ -233,7 +236,6 @@ RUN apt-install \
         unzip \
         coreutils; \
     apt-install zlib1g-dev libzip-dev pax-utils && \
-    docker-php-ext-configure zip --with-libzip && \
     docker-php-ext-install -j$(getconf _NPROCESSORS_ONLN) zip opcache && \
     runDeps="$( \
     scanelf --needed --nobanner --format '%n#p' --recursive /usr/local/lib/php/extensions \
@@ -332,8 +334,8 @@ RUN a2enmod rewrite
 
 RUN docker-php-ext-configure intl
 RUN docker-php-ext-configure gd \
-    --with-freetype-dir=/usr/include \
-    --with-jpeg-dir=/usr/include
+    --with-freetype=/usr/include \
+    --with-jpeg=/usr/include
 RUN docker-php-ext-install \
         gd \
         intl \
@@ -341,8 +343,10 @@ RUN docker-php-ext-install \
         pdo_mysql \
         tidy
 RUN pecl install \
-        xdebug \
-        imagick
+        xdebug
+RUN mkdir -p /usr/src/php/ext/imagick; \
+    curl -fsSL https://github.com/Imagick/imagick/archive/06116aa24b76edaf6b1693198f79e6c295eda8a9.tar.gz | tar xvz -C "/usr/src/php/ext/imagick" --strip 1; \
+    docker-php-ext-install imagick;
 RUN docker-php-ext-enable \
         xdebug \
         imagick
