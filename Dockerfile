@@ -52,13 +52,13 @@ RUN \
 
 # Install Apache
 ENV APACHE_CONFDIR /etc/apache2
-ENV APACHE_ENVWARS ${APACHE_CONFDIR}/envvars
+ENV APACHE_ENVVARS ${APACHE_CONFDIR}/envvars
 
 RUN \
     apt-install apache2 && \
     sed -ri 's/^export ([^=]+)=(.*)$/: ${\1:=\2}\nexport \1/' "$APACHE_ENVVARS"; \
     \
-    . "${APACHE_ENVWARS}"; \
+    . "${APACHE_ENVVARS}"; \
     for dir in \
         "$APACHE_LOCK_DIR" \
         "$APACHE_RUN_DIR" \
