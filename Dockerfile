@@ -354,9 +354,9 @@ RUN docker-php-ext-enable \
 RUN \
     echo "date.timezone = Pacific/Auckland" > ${PHP_INI_DIR}/conf.d/timezone.ini && \
     { \
-        echo "xdebug.remote_enable=1"; \
-        echo "xdebug.remote_autostart=1"; \
-        echo "xdebug.remote_host='host.docker.internal'"; \
+        echo "xdebug.mode=debug"; \
+        echo "xdebug.start_with_request=yes"; \
+        echo "xdebug.client_host='host.docker.internal'"; \
     } > ${PHP_INI_DIR}/conf.d/xdebug.ini
 
 WORKDIR /var/www/html
