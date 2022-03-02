@@ -59,6 +59,9 @@ steps:
       - sed -i "1,$${TagHeading}{ $${TagHeading}P ; d } ; $${HeadingPattern},\$d" .releaseNotes.md
       - cp -f .releaseNotes.md .releaseTitle.md
       - sed -i "2,\$d ; s$${HeadingPattern}\\\\1/" .releaseTitle.md
+    when:
+      event:
+        - tag
   - name: publish release
     image: plugins/github-release
     depends_on:
