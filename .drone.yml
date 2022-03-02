@@ -20,6 +20,7 @@ steps:
       - docker build -t $${IMAGE_NAME} -f $${DOCKERFILE} .
   - name: scan
     image: docker
+    privileged: true
     environment:
       DOCKER_NAME:
         from_secret: docker_name
