@@ -10,9 +10,6 @@ steps:
   - name: build
     image: docker
     privileged: true
-    environment:
-      IMAGE_NAME: manuth/silverstripe-dev
-      DOCKERFILE: ./Dockerfile
     volumes:
       - name: docker-socket
         path: /var/run/docker.sock
@@ -37,7 +34,7 @@ steps:
       - chmod +x ~/.docker/cli-plugins/docker-scan
       - echo $${DOCKER_TOKEN} | docker login -u $${DOCKER_NAME} --password-stdin
       - docker scan --login --token $${SNYK_TOKEN}
-      - docker scan --exclude-base --accept-license manuth/silverstripe-dev --file ./Dockerfile
+      - docker scan --exclude-base --accept-license $${IMAGE_NAME} --file ./Dockerfile
 
 volumes:
   - name: docker-socket
