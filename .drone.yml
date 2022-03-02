@@ -33,8 +33,9 @@ steps:
       - wget https://github.com/docker/scan-cli-plugin/releases/latest/download/docker-scan_linux_amd64 -O ~/.docker/cli-plugins/docker-scan
       - chmod +x ~/.docker/cli-plugins/docker-scan
       - echo $${DOCKER_TOKEN} | docker login -u $${DOCKER_NAME} --password-stdin
-      - docker scan --login --token $${SNYK_TOKEN}
-      - docker scan --exclude-base --accept-license $${IMAGE_NAME} --file ./Dockerfile
+      - docker scan --accept-license --login --token $${SNYK_TOKEN}
+      - cp ./Dockerfile /tmp
+      - docker scan --exclude-base --accept-license $${IMAGE_NAME} --file /tmp/Dockerfile
 
 volumes:
   - name: docker-socket
