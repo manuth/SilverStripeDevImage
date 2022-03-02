@@ -35,7 +35,7 @@ steps:
       - echo $${DOCKER_TOKEN} | docker login -u $${DOCKER_NAME} --password-stdin
       - docker scan --accept-license --login --token $${SNYK_TOKEN}
       - cp ./Dockerfile /tmp
-      - docker scan --exclude-base --accept-license $${IMAGE_NAME} --file /tmp/Dockerfile
+      - cd /tmp; docker scan --exclude-base --accept-license $${IMAGE_NAME} --file /tmp/Dockerfile; cd -;
 
 volumes:
   - name: docker-socket
