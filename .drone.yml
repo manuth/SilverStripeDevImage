@@ -32,7 +32,7 @@ steps:
         path: /var/lib/docker
     commands:
       - docker tag $${IMAGE_NAME} $${IMAGE_NAME}:$${DRONE_TAG}
-      - echo $${DOCKER_TOKEN} | docker login -u $${DOCKER_NAME} --password-stdin
+      - docker login -u $${DOCKER_NAME} --password $${DOCKER_TOKEN}
       - docker publish $${IMAGE_NAME}:$${DRONE_TAG}
     when:
       event:
