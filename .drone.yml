@@ -1,0 +1,44 @@
+name: SilverStripeDevImage
+kind: pipeline
+type: docker
+
+environment:
+  IMAGE_NAME: manuth/silverstripe-dev
+  DOCKERFILE: ./Dockerfile
+
+steps:
+  - name: build
+    image: docker
+    privileged: true
+    environment:
+      IMAGE_NAME: manuth/silverstripe-dev
+      DOCKERFILE: ./Dockerfile
+    volumes:
+      - name: docker-socket
+        path: /var/run/docker.sock
+    commands:
+      - docker build -t $${IMAGE_NAME} -f $${DOCKERFILE} .
+  - name: scan
+    image: docker
+    environment:
+      DOCKER_NAME:
+        from_secret: docker_name
+      DOCKER_TOKEN:
+        from_secret: docker_token
+      SNYK_TOKEN:
+        from_secret: snyk_token
+    volumes:
+      - name: docker-socket
+        path: /var/run/docker.sock
+    commands:
+      - mkdir -p ~/.docker/cli-plugins
+      - wget https://github.com/docker/scan-cli-plugin/releases/latest/download/docker-scan_linux_amd64 -O ~/.docker/cli-plugins/docker-scan
+      - chmod +x ~/.docker/cli-plugins/docker-scan
+      - echo $${DOCKER_TOKEN} | docker login -u $${DOCKER_NAME} --password-stdin
+      - docker scan --login --token $${SNYK_TOKEN}
+      - docker scan --exclude-base --accept-license manuth/silverstripe-dev --file ./Dockerfile
+
+volumes:
+  - name: docker-socket
+    host:
+      path: /var/run/docker.sock
