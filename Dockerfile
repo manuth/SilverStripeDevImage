@@ -82,15 +82,15 @@ RUN sed -i 's/\(Alias \/icons\/.*\)$/# \1/' /etc/apache2/mods-enabled/alias.conf
 ## Configuring Apache for handling PHP-Files
 RUN { \
         echo '<FilesMatch \.php$>'; \
-        echo '\tSetHandler application/x-httpd-php'; \
+        echo '    SetHandler application/x-httpd-php'; \
         echo '</FilesMatch>'; \
         echo; \
         echo 'DirectoryIndex disabled'; \
         echo 'DirectoryIndex index.php index.html'; \
         echo; \
         echo '<Directory /var/www/>'; \
-        echo '\tOptions -Indexes'; \
-        echo '\tAllowOverride All'; \
+        echo '    Options -Indexes'; \
+        echo '    AllowOverride All'; \
         echo '</Directory>'; \
     } | tee "$APACHE_CONFDIR/conf-available/docker-php.conf" \
     && a2enconf docker-php
