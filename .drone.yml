@@ -30,10 +30,10 @@ steps:
         path: /var/run/docker.sock
       - name: docker-lib
         path: /var/lib/docker
-      commands:
-        - docker tag $${IMAGE_NAME} $${IMAGE_NAME}:$${DRONE_TAG}
-        - echo $${DOCKER_TOKEN} | docker login -u $${DOCKER_NAME} --password-stdin
-        - docker publish $${IMAGE_NAME}:$${DRONE_TAG}
+    commands:
+      - docker tag $${IMAGE_NAME} $${IMAGE_NAME}:$${DRONE_TAG}
+      - echo $${DOCKER_TOKEN} | docker login -u $${DOCKER_NAME} --password-stdin
+      - docker publish $${IMAGE_NAME}:$${DRONE_TAG}
     when:
       event:
         - tag
