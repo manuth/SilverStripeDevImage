@@ -13,31 +13,81 @@ steps:
     volumes:
       - name: docker-socket
         path: /var/run/docker.sock
+      - name: docker-lib
+        path: /var/lib/docker
     commands:
       - docker build -t $${IMAGE_NAME} -f $${DOCKERFILE} .
-  - name: scan
+  - name: publish
     image: docker
     privileged: true
     environment:
       DOCKER_NAME:
-        from_secret: docker_name
+        from_secret: drocker_name
       DOCKER_TOKEN:
-        from_secret: docker_token
-      SNYK_TOKEN:
-        from_secret: snyk_token
+        from_secret: drocker_token
     volumes:
       - name: docker-socket
         path: /var/run/docker.sock
+      - name: docker-lib
+        path: /var/lib/docker
+      commands:
+        - docker tag $${IMAGE_NAME} $${IMAGE_NAME}:$${DRONE_TAG}
+        - echo $${DOCKER_TOKEN} | docker login -u $${DOCKER_NAME} --password-stdin
+        - docker publish $${IMAGE_NAME}:$${DRONE_TAG}
+    when:
+      event:
+        - tag
+  - name: prepare release
+    image: node
+    depends_on:
+      - build
     commands:
-      - mkdir -p ~/.docker/cli-plugins
-      - wget https://github.com/docker/scan-cli-plugin/releases/latest/download/docker-scan_linux_amd64 -O ~/.docker/cli-plugins/docker-scan
-      - chmod +x ~/.docker/cli-plugins/docker-scan
-      - echo $${DOCKER_TOKEN} | docker login -u $${DOCKER_NAME} --password-stdin
-      - docker scan --accept-license --login --token $${SNYK_TOKEN}
-      - cp ./Dockerfile /tmp
-      - cd /tmp; docker scan --exclude-base --accept-license $${IMAGE_NAME} --file /tmp/Dockerfile; cd -;
+      - npm install @stdlib/utils-escape-regexp-string --no-save
+      - node -e "console.log(require('@stdlib/utils-escape-regexp-string')('${DRONE_TAG}'))" > .tagName.txt
+    when:
+      event:
+        - tag
+  - name: prepare release notes
+    image: alpine
+    depends_on:
+      - prepare release
+    commands:
+      - export TagName=$$(cat .tagName.txt)
+      - export TagHeading="/## \(.* \($${TagName}\|\[$${TagName}\]\)\)\$/"
+      - export HeadingPattern='/## \(.* \(v[0-9.]*\|\[.*\]\)\)/'
+      - cp -f CHANGELOG.md .releaseNotes.md
+      - sed -i "1,$${TagHeading}{ $${TagHeading}P ; d } ; $${HeadingPattern},\$d" .releaseNotes.md
+      - cp -f .releaseNotes.md .releaseTitle.md
+      - sed -i "2,\$d ; s$${HeadingPattern}\\\\1/" .releaseTitle.md
+  - name: publish release
+    image: plugins/github-release
+    depends_on:
+      - prepare release notes
+    commands: []
+    settings:
+      api_key:
+        from_secret: github_publish_token
+      files: []
+      title: .releaseTitle.md
+      note: .releaseNotes.md
+    when:
+      event:
+        - tag
 
 volumes:
   - name: docker-socket
     host:
       path: /var/run/docker.sock
+  - name: docker-lib
+    host:
+      path: /var/lib/docker
+
+trigger:
+  ref:
+    - refs/heads/**
+    - refs/pull/**
+    - refs/tags/**
+  event:
+    - push
+    - pull_request
+    - tag
