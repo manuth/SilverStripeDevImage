@@ -1,5 +1,5 @@
 FROM php:8.1.3-apache-bullseye
-FROM debian:buster-slim
+FROM debian:11.2
 
 # Prepare Apt-Installer
 RUN echo "#!/bin/bash" > apt-install
