@@ -236,8 +236,10 @@ RUN apt-install \
         make \
         zip \
         unzip \
-        coreutils; \
-    apt-install zlib1g-dev libzip-dev pax-utils && \
+        coreutils \
+        zlib1g-dev \
+        libzip-dev \
+        pax-utils && \
     docker-php-ext-install -j$(getconf _NPROCESSORS_ONLN) zip opcache && \
     runDeps="$( \
     scanelf --needed --nobanner --format '%n#p' --recursive /usr/local/lib/php/extensions \
