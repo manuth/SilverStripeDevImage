@@ -42,6 +42,7 @@ RUN \
         curl \
         xz-utils
 
+## Prepare Filesystem
 ENV PHP_INI_DIR /usr/local/etc/php
 RUN \
     mkdir -p "${PHP_INI_DIR}/conf.d"; \
@@ -77,6 +78,7 @@ RUN \
 
 RUN a2dismod mpm_event && a2enmod mpm_prefork
 
+## Remove `/icons/` alias entry as SilverStripe uses this path
 RUN sed -i 's/\(Alias \/icons\/.*\)$/# \1/' /etc/apache2/mods-enabled/alias.conf
 
 ## Configuring Apache for handling PHP-Files
@@ -95,7 +97,7 @@ RUN { \
     } | tee "$APACHE_CONFDIR/conf-available/docker-php.conf" \
     && a2enconf docker-php
 
-# Building PHP
+# Build PHP
 ENV PHP_EXTRA_BUILD_DEPS apache2-dev
 ENV PHP_EXTRA_CONFIGURE_ARGS --with-apxs2 --disable-cgi
 
@@ -111,6 +113,7 @@ ENV PHP_VERSION 8.1.3
 ENV PHP_URL="https://www.php.net/distributions/php-${PHP_VERSION}.tar.xz" PHP_ASC_URL="https://www.php.net/distributions/php-${PHP_VERSION}.tar.xz.asc"
 ENV PHP_SHA256="5d65a11071b47669c17452fb336c290b67c101efb745c1dbe7525b5caf546ec6"
 
+## Download and Verify PHP Source
 RUN \
     savedAptMark="$(apt-mark showmanual)"; \
     apt-install gnupg dirmngr; \
@@ -140,6 +143,7 @@ RUN \
 
 COPY --from=0 /usr/local/bin/docker-php-source /usr/local/bin/
 
+## Perform Build
 RUN \
     savedAptMark="$(apt-mark showmanual)"; \
     apt-install \
@@ -286,6 +290,7 @@ RUN \
         *) echo "unsupported architecture"; exit 1 ;; \
     esac && \
     apt-install ca-certificates curl wget gnupg dirmngr xz-utils && \
+    # gpg keys listed at https://github.com/nodejs/node#release-keys
     set -ex && \
     for key in \
       4ED778F539E3634C779C87C6D7062848A1AB005C \
@@ -362,5 +367,5 @@ EXPOSE 80
 CMD ["apache2-foreground"]
 
 
-# Cleaning up the Installation
+# Clean up the Installation
 RUN rm /usr/local/bin/apt-install
