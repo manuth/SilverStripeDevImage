@@ -1,0 +1,96 @@
+name: SilverStripeDevImage
+kind: pipeline
+type: docker
+
+environment:
+  IMAGE_NAME: manuth/silverstripe-dev
+  DOCKERFILE: ./Dockerfile
+
+steps:
+  - name: build
+    image: docker
+    privileged: true
+    volumes:
+      - name: docker-socket
+        path: /var/run/docker.sock
+      - name: docker-lib
+        path: /var/lib/docker
+    commands:
+      - docker build -t $${IMAGE_NAME} -f $${DOCKERFILE} .
+  - name: publish
+    image: docker
+    privileged: true
+    environment:
+      DOCKER_NAME:
+        from_secret: docker_name
+      DOCKER_TOKEN:
+        from_secret: docker_token
+    volumes:
+      - name: docker-socket
+        path: /var/run/docker.sock
+      - name: docker-lib
+        path: /var/lib/docker
+    commands:
+      - docker tag $${IMAGE_NAME} $${IMAGE_NAME}:$${DRONE_TAG}
+      - docker login -u $${DOCKER_NAME} --password $${DOCKER_TOKEN}
+      - docker push $${IMAGE_NAME}:$${DRONE_TAG}
+    when:
+      event:
+        - tag
+  - name: prepare release
+    image: node
+    depends_on:
+      - build
+    commands:
+      - npm install @stdlib/utils-escape-regexp-string --no-save
+      - node -e "console.log(require('@stdlib/utils-escape-regexp-string')('${DRONE_TAG}'))" > .tagName.txt
+    when:
+      event:
+        - tag
+  - name: prepare release notes
+    image: alpine
+    depends_on:
+      - prepare release
+    commands:
+      - export TagName=$$(cat .tagName.txt)
+      - export TagHeading="/## \(.* \($${TagName}\|\[$${TagName}\]\)\)\$/"
+      - export HeadingPattern='/## \(.* \(v[0-9.]*\|\[.*\]\)\)/'
+      - cp -f CHANGELOG.md .releaseNotes.md
+      - sed -i "1,$${TagHeading}{ $${TagHeading}P ; d } ; $${HeadingPattern},\$d" .releaseNotes.md
+      - cp -f .releaseNotes.md .releaseTitle.md
+      - sed -i "2,\$d ; s$${HeadingPattern}\\\\1/" .releaseTitle.md
+    when:
+      event:
+        - tag
+  - name: publish release
+    image: plugins/github-release
+    depends_on:
+      - prepare release notes
+    commands: []
+    settings:
+      api_key:
+        from_secret: github_publish_token
+      files: []
+      title: .releaseTitle.md
+      note: .releaseNotes.md
+    when:
+      event:
+        - tag
+
+volumes:
+  - name: docker-socket
+    host:
+      path: /var/run/docker.sock
+  - name: docker-lib
+    host:
+      path: /var/lib/docker
+
+trigger:
+  ref:
+    - refs/heads/**
+    - refs/pull/**
+    - refs/tags/**
+  event:
+    - push
+    - pull_request
+    - tag

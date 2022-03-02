@@ -1,5 +1,5 @@
-FROM php:8.0.6-apache
-FROM debian:buster-slim
+FROM php:8.1.3-apache-bullseye
+FROM debian:11.2
 
 # Prepare Apt-Installer
 RUN echo "#!/bin/bash" > apt-install
@@ -42,6 +42,7 @@ RUN \
         curl \
         xz-utils
 
+## Prepare Filesystem
 ENV PHP_INI_DIR /usr/local/etc/php
 RUN \
     mkdir -p "${PHP_INI_DIR}/conf.d"; \
@@ -77,25 +78,26 @@ RUN \
 
 RUN a2dismod mpm_event && a2enmod mpm_prefork
 
+## Remove `/icons/` alias entry as SilverStripe uses this path
 RUN sed -i 's/\(Alias \/icons\/.*\)$/# \1/' /etc/apache2/mods-enabled/alias.conf
 
 ## Configuring Apache for handling PHP-Files
 RUN { \
         echo '<FilesMatch \.php$>'; \
-        echo '\tSetHandler application/x-httpd-php'; \
+        echo '    SetHandler application/x-httpd-php'; \
         echo '</FilesMatch>'; \
         echo; \
         echo 'DirectoryIndex disabled'; \
         echo 'DirectoryIndex index.php index.html'; \
         echo; \
         echo '<Directory /var/www/>'; \
-        echo '\tOptions -Indexes'; \
-        echo '\tAllowOverride All'; \
+        echo '    Options -Indexes'; \
+        echo '    AllowOverride All'; \
         echo '</Directory>'; \
     } | tee "$APACHE_CONFDIR/conf-available/docker-php.conf" \
     && a2enconf docker-php
 
-# Building PHP
+# Build PHP
 ENV PHP_EXTRA_BUILD_DEPS apache2-dev
 ENV PHP_EXTRA_CONFIGURE_ARGS --with-apxs2 --disable-cgi
 
@@ -103,12 +105,15 @@ ENV PHP_CFLAGS="-fstack-protector-strong -fpic -fpie -O2 -D_LARGEFILE_SOURCE -D_
 ENV PHP_CPPFLAGS="$PHP_CFLAGS"
 ENV PHP_LDFLAGS="-Wl,-O1 -Wl,--hash-style=both -pie"
 
-ENV GPG_KEYS 1729F83938DA44E27BA0F4D3DBDB397470D12172 BFDDD28642824F8118EF77909B67A5C12229118F
+ENV GPG_KEYS 528995BFEDFBA7191D46839EF9BA0ADA31CBD89E \
+             39B641343D8C104B2B146DC3F9C39DC0B9698544 \
+             F1F692238FBC1666E5A5CCD4199F9DFEF6FFBAFD
 
-ENV PHP_VERSION 8.0.6
+ENV PHP_VERSION 8.1.3
 ENV PHP_URL="https://www.php.net/distributions/php-${PHP_VERSION}.tar.xz" PHP_ASC_URL="https://www.php.net/distributions/php-${PHP_VERSION}.tar.xz.asc"
-ENV PHP_SHA256="e9871d3b6c391fe9e89f86f6334852dcc10eeaaa8d5565beb8436e7f0cf30e20"
+ENV PHP_SHA256="5d65a11071b47669c17452fb336c290b67c101efb745c1dbe7525b5caf546ec6"
 
+## Download and Verify PHP Source
 RUN \
     savedAptMark="$(apt-mark showmanual)"; \
     apt-install gnupg dirmngr; \
@@ -138,6 +143,7 @@ RUN \
 
 COPY --from=0 /usr/local/bin/docker-php-source /usr/local/bin/
 
+## Perform Build
 RUN \
     savedAptMark="$(apt-mark showmanual)"; \
     apt-install \
@@ -234,8 +240,10 @@ RUN apt-install \
         make \
         zip \
         unzip \
-        coreutils; \
-    apt-install zlib1g-dev libzip-dev pax-utils && \
+        coreutils \
+        zlib1g-dev \
+        libzip-dev \
+        pax-utils && \
     docker-php-ext-install -j$(getconf _NPROCESSORS_ONLN) zip opcache && \
     runDeps="$( \
     scanelf --needed --nobanner --format '%n#p' --recursive /usr/local/lib/php/extensions \
@@ -254,28 +262,21 @@ RUN apt-install \
 
 ENV COMPOSER_ALLOW_SUPERUSER 1
 ENV COMPOSER_HOME /tmp
-ENV COMPOSER_VERSION 2.0.13
+ENV COMPOSER_VERSION 2.2.7
 
-RUN curl --silent --fail --location --retry 3 -o /tmp/installer.php --url https://raw.githubusercontent.com/composer/getcomposer.org/cb19f2aa3aeaa2006c0cd69a7ef011eb31463067/web/installer && \
-    php -r " \
-        \$signature = '48e3236262b34d30969dca3c37281b3b4bbe3221bda826ac6a9a62d6444cdb0dcd0615698a5cbe587c3f0fe57a54d8f5'; \
-        \$hash = hash('sha384', file_get_contents('/tmp/installer.php')); \
-        if (!hash_equals(\$signature, \$hash)) { \
-            unlink('/tmp/installer.php'); \
-            echo 'Integrity check failed; installer is either corrupt or worse.' . PHP_EOL; \
-            exit(1); \
-        }" && \
-        php /tmp/installer.php --no-ansi --install-dir=/usr/bin --filename=composer --version=${COMPOSER_VERSION} && \
-        composer --ansi --version --no-interaction && \
-        rm -f /tmp/installer.php && \
-        find /tmp -type d -exec chmod -v 1777 {} +
+RUN curl --silent --fail --location --retry 3 -o /tmp/installer.php --url https://raw.githubusercontent.com/composer/getcomposer.org/f24b8f860b95b52167f91bbd3e3a7bcafe043038/web/installer && \
+    echo 3137ad86bd990524ba1dedc2038309dfa6b63790d3ca52c28afea65dcc2eaead16fb33e9a72fd2a7a8240afaf26e065939a2d472f3b0eeaa575d1e8648f9bf19 /tmp/installer.php | sha512sum --strict --check && \
+    php /tmp/installer.php --no-ansi --install-dir=/usr/bin --filename=composer --version=${COMPOSER_VERSION} && \
+    composer --ansi --version --no-interaction && \
+    rm -f /tmp/installer.php && \
+    find /tmp -type d -exec chmod -v 1777 {} +
 
 # Install NodeJS
 RUN \
     groupadd --gid 1000 node && \
     useradd --uid 1000 --gid node --shell /bin/bash --create-home node
 
-ENV NODE_VERSION 14.16.1
+ENV NODE_VERSION 17.6.0
 
 RUN \
     ARCH= && dpkgArch="$(dpkg --print-architecture)" && \
@@ -289,33 +290,34 @@ RUN \
         *) echo "unsupported architecture"; exit 1 ;; \
     esac && \
     apt-install ca-certificates curl wget gnupg dirmngr xz-utils && \
+    # gpg keys listed at https://github.com/nodejs/node#release-keys
+    set -ex && \
     for key in \
-      94AE36675C464D64BAFA68DD7434390BDBE9B9C5 \
-      FD3A5288F042B6850C66B31F09FE44734EB7990E \
-      71DCFD284A79C3B38668286BC97EC7A07EDE3FC1 \
-      DD8F2338BAE7501E3DD5AC78C273792F7D83545D \
-      C4F0DFFF4E8C1A8236409D08E73BC641CC11F4C8 \
-      B9AE9905FFD7803F25714661B63B535A4C206CA9 \
-      77984A986EBC2AA786BC0F66B01FBB92821C587A \
-      8FCCA13FEF1D0C2E91008E09770F7A9A5AE15600 \
       4ED778F539E3634C779C87C6D7062848A1AB005C \
+      94AE36675C464D64BAFA68DD7434390BDBE9B9C5 \
+      74F12602B6F1C4E913FAA37AD3A89613643B6201 \
+      71DCFD284A79C3B38668286BC97EC7A07EDE3FC1 \
+      8FCCA13FEF1D0C2E91008E09770F7A9A5AE15600 \
+      C4F0DFFF4E8C1A8236409D08E73BC641CC11F4C8 \
+      C82FA3AE1CBEDC6BE46B9360C43CEC45C17AB93C \
+      DD8F2338BAE7501E3DD5AC78C273792F7D83545D \
       A48C2BEE680E841632CD4E44F07496B3EB3C1762 \
+      108F52B48DB57BB0CC439B2997B01419BD92F80A \
       B9E2F5981AA6E0CD28160D9FF13993A75599653C \
     ; do \
-      gpg --batch --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys "$key" || \
-      gpg --batch --keyserver hkp://ipv4.pool.sks-keyservers.net --recv-keys "$key" || \
-      gpg --batch --keyserver hkp://pgp.mit.edu:80 --recv-keys "$key" ; \
+      gpg --batch --keyserver hkps://keys.openpgp.org --recv-keys "$key" || \
+      gpg --batch --keyserver keyserver.ubuntu.com --recv-keys "$key" ; \
     done && \
-    curl -fsSLO --compressed "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-$ARCH.tar.xz" && \
+    curl -fsSLO --compressed "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" && \
     curl -fsSLO --compressed "https://nodejs.org/dist/v${NODE_VERSION}/SHASUMS256.txt.asc" && \
     gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc && \
-    grep " node-v${NODE_VERSION}-linux-$ARCH.tar.xz\$" SHASUMS256.txt | sha256sum -c - && \
-    tar -xJf "node-v${NODE_VERSION}-linux-$ARCH.tar.xz" -C /usr/local --strip-components=1 --no-same-owner && \
-    rm "node-v${NODE_VERSION}-linux-$ARCH.tar.xz" SHASUMS256.txt.asc SHASUMS256.txt && \
+    grep " node-v${NODE_VERSION}-linux-${ARCH}.tar.xz\$" SHASUMS256.txt | sha256sum -c - && \
+    tar -xJf "node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" -C /usr/local --strip-components=1 --no-same-owner && \
+    rm "node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" SHASUMS256.txt.asc SHASUMS256.txt && \
     ln -s /usr/local/bin/node /usr/local/bin/nodejs
 
 # Install Yarn
-ENV YARN_VERSION 1.17.3
+ENV YARN_VERSION 1.22.17
 RUN npm i -g yarn@${YARN_VERSION}
 
 # Install SilverStripe Dependencies
@@ -345,7 +347,7 @@ RUN docker-php-ext-install \
 RUN pecl install \
         xdebug
 RUN mkdir -p /usr/src/php/ext/imagick; \
-    curl -fsSL https://github.com/Imagick/imagick/archive/06116aa24b76edaf6b1693198f79e6c295eda8a9.tar.gz | tar xvz -C "/usr/src/php/ext/imagick" --strip 1; \
+    curl -fsSL https://github.com/Imagick/imagick/archive/tags/3.7.0.tar.gz | tar xvz -C "/usr/src/php/ext/imagick" --strip 1; \
     docker-php-ext-install imagick;
 RUN docker-php-ext-enable \
         xdebug \
@@ -365,5 +367,5 @@ EXPOSE 80
 CMD ["apache2-foreground"]
 
 
-# Cleaning up the Installation
+# Clean up the Installation
 RUN rm /usr/local/bin/apt-install
