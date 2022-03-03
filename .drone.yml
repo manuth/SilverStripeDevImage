@@ -36,6 +36,7 @@ steps:
       - docker tag $${IMAGE_NAME} $${IMAGE_NAME}:$${DRONE_TAG}
       - docker login -u $${DOCKER_NAME} --password $${DOCKER_TOKEN}
       - docker push $${IMAGE_NAME}:$${DRONE_TAG}
+      - docker push $${IMAGE_NAME}
     when:
       event:
         - tag
