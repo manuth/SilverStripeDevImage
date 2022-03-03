@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Updated
   - All components
   - Development environment
+  - Fix broken automated publishing
 
 [Show differences](https://github.com/manuth/SilverStripeDevImage/compare/php-8.0.6-composer-20.0.13-node-14.16.1...php-8.1.3-composer-2.2.7-node-17.6.0)
 
