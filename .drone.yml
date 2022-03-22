@@ -28,7 +28,7 @@ steps:
       - name: docker-lib
         path: /var/lib/docker
     commands:
-      - echo $$(pwd)/tests
+      - ls /drone/src/tests
       - docker run --rm -v /drone/src/tests:/tests --entrypoint "" $${IMAGE_NAME} ls -al /tests;
   - name: publish
     image: docker
