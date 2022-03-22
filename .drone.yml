@@ -29,7 +29,7 @@ steps:
         path: /var/lib/docker
     commands:
       - ls /drone/src/tests
-      - cat ./tests/test.sh | docker run -i $${IMAGE_NAME} bash;
+      - cat ./tests/test.sh | docker run -e SS_DATABASE_CHOOSE_NAME=1 -i $${IMAGE_NAME} bash;
   - name: publish
     image: docker
     depends_on:
