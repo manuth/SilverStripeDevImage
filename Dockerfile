@@ -361,11 +361,10 @@ RUN \
         echo "xdebug.client_host='host.docker.internal'"; \
     } > ${PHP_INI_DIR}/conf.d/xdebug.ini
 
+# Clean up the Installation
+RUN rm /usr/local/bin/apt-install
+
 WORKDIR /var/www/html
 
 EXPOSE 80
 CMD ["apache2-foreground"]
-
-
-# Clean up the Installation
-RUN rm /usr/local/bin/apt-install
