@@ -29,7 +29,7 @@ steps:
         path: /var/lib/docker
     commands:
       - echo $$(pwd)/tests
-      - docker run --rm -v $$(pwd)/tests:/tests --entrypoint "" $${IMAGE_NAME} ls -al /tests;
+      - docker run --rm -v /drone/src/tests:/tests --entrypoint "" $${IMAGE_NAME} ls -al /tests;
   - name: publish
     image: docker
     depends_on:
