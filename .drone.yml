@@ -28,7 +28,7 @@ steps:
       - name: docker-lib
         path: /var/lib/docker
     commands:
-      - docker run -v $(pwd)/tests:/tests --entrypoint bash $${IMAGE_NAME} "ls -al /tests/test.sh"
+      - docker run -v $(pwd)/tests:/tests --entrypoint bash $${IMAGE_NAME} "ls -al /tests"
   - name: publish
     image: docker
     depends_on:
