@@ -1,4 +1,4 @@
-FROM php:8.1.3-apache-bullseye
+FROM php:8.0.17-apache-bullseye
 FROM debian:11.2
 
 # Prepare Apt-Installer
@@ -109,9 +109,9 @@ ENV GPG_KEYS 528995BFEDFBA7191D46839EF9BA0ADA31CBD89E \
              39B641343D8C104B2B146DC3F9C39DC0B9698544 \
              F1F692238FBC1666E5A5CCD4199F9DFEF6FFBAFD
 
-ENV PHP_VERSION 8.1.3
+ENV PHP_VERSION 8.0.17
 ENV PHP_URL="https://www.php.net/distributions/php-${PHP_VERSION}.tar.xz" PHP_ASC_URL="https://www.php.net/distributions/php-${PHP_VERSION}.tar.xz.asc"
-ENV PHP_SHA256="5d65a11071b47669c17452fb336c290b67c101efb745c1dbe7525b5caf546ec6"
+ENV PHP_SHA256="4e7d94bb3d144412cb8b2adeb599fb1c6c1d7b357b0d0d0478dc5ef53532ebc5"
 
 ## Download and Verify PHP Source
 RUN \
