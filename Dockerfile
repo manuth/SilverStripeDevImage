@@ -318,7 +318,7 @@ RUN \
     ln -s /usr/local/bin/node /usr/local/bin/nodejs
 
 # Install Yarn
-ENV YARN_VERSION 1.22.17
+ENV YARN_VERSION 1.22.18
 RUN npm i -g yarn@${YARN_VERSION}
 
 # Install SilverStripe Dependencies
