@@ -6,7 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## SilverStripeDevImage [Unreleased]
 
-[Show differences](https://github.com/manuth/SilverStripeDevImage/compare/php-8.0.6-composer-20.0.13-node-14.16.1...dev)
+[Show differences](https://github.com/manuth/SilverStripeDevImage/compare/php-8.0.17-composer-2.2.7-node-17.6.0...dev)
+
+## SilverStripeDevImage [php-8.0.17-composer-2.2.7-node-17.6.0]
+### Removed
+  - PHP 8.1 in favor of PHP 8.0
+
+### Added
+  - PHP 8.0
+
+[Show differences](https://github.com/manuth/SilverStripeDevImage/compare/php-8.0.6-composer-20.0.13-node-14.16.1...php-8.0.17-composer-2.2.7-node-17.6.0)
 
 ## SilverStripeDevImage [php-8.1.3-composer-2.2.7-node-17.6.0]
 ### Updated

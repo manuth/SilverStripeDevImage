@@ -17,10 +17,23 @@ steps:
         path: /var/lib/docker
     commands:
       - docker build -t $${IMAGE_NAME} -f $${DOCKERFILE} .
-  - name: publish
+  - name: test
     image: docker
     depends_on:
       - build
+    privileged: true
+    volumes:
+      - name: docker-socket
+        path: /var/run/docker.sock
+      - name: docker-lib
+        path: /var/lib/docker
+    commands:
+      - ls /drone/src/tests
+      - cat ./tests/test.sh | docker run -i $${IMAGE_NAME} bash;
+  - name: publish
+    image: docker
+    depends_on:
+      - test
     privileged: true
     environment:
       DOCKER_NAME:
@@ -43,7 +56,7 @@ steps:
   - name: prepare release
     image: node
     depends_on:
-      - build
+      - test
     commands:
       - npm install @stdlib/utils-escape-regexp-string --no-save
       - node -e "console.log(require('@stdlib/utils-escape-regexp-string')('${DRONE_TAG}'))" > .tagName.txt
