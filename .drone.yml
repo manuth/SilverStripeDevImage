@@ -19,6 +19,8 @@ steps:
       - docker build -t $${IMAGE_NAME} -f $${DOCKERFILE} .
   - name: test
     image: docker
+    depends_on:
+      - build
     privileged: true
     volumes:
       - name: docker-socket
