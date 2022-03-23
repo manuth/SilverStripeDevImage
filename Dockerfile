@@ -262,7 +262,7 @@ RUN apt-install \
 
 ENV COMPOSER_ALLOW_SUPERUSER 1
 ENV COMPOSER_HOME /tmp
-ENV COMPOSER_VERSION 2.2.7
+ENV COMPOSER_VERSION 2.2.9
 
 RUN curl --silent --fail --location --retry 3 -o /tmp/installer.php --url https://raw.githubusercontent.com/composer/getcomposer.org/f24b8f860b95b52167f91bbd3e3a7bcafe043038/web/installer && \
     echo 3137ad86bd990524ba1dedc2038309dfa6b63790d3ca52c28afea65dcc2eaead16fb33e9a72fd2a7a8240afaf26e065939a2d472f3b0eeaa575d1e8648f9bf19 /tmp/installer.php | sha512sum --strict --check && \
@@ -276,7 +276,7 @@ RUN \
     groupadd --gid 1000 node && \
     useradd --uid 1000 --gid node --shell /bin/bash --create-home node
 
-ENV NODE_VERSION 17.6.0
+ENV NODE_VERSION 17.7.2
 
 RUN \
     ARCH= && dpkgArch="$(dpkg --print-architecture)" && \
@@ -294,6 +294,7 @@ RUN \
     set -ex && \
     for key in \
       4ED778F539E3634C779C87C6D7062848A1AB005C \
+      141F07595B7B3FFE74309A937405533BE57C7D57 \
       94AE36675C464D64BAFA68DD7434390BDBE9B9C5 \
       74F12602B6F1C4E913FAA37AD3A89613643B6201 \
       71DCFD284A79C3B38668286BC97EC7A07EDE3FC1 \
@@ -317,7 +318,7 @@ RUN \
     ln -s /usr/local/bin/node /usr/local/bin/nodejs
 
 # Install Yarn
-ENV YARN_VERSION 1.22.17
+ENV YARN_VERSION 1.22.18
 RUN npm i -g yarn@${YARN_VERSION}
 
 # Install SilverStripe Dependencies
